@@ -1,55 +1,53 @@
 import speech_recognition as sr
-import pyttsx3
-from datetime import datetime
 
-# Initialize the recognizer and text-to-speech engine
-recognizer = sr.Recognizer()
-engine = pyttsx3.init()
-
-def speak(text):
-    """Speak the given text using the TTS engine."""
-    print(f"Speaking: {text}")  # Debugging log
-    engine.say(text)
-    engine.runAndWait()
-
-def listen():
-    """Listen to the microphone and return the recognized command."""
+def listen_and_transcribe():
+    recognizer = sr.Recognizer()
     with sr.Microphone() as source:
-        print("Listening...")
-        try:
-            audio = recognizer.listen(source)
-            command = recognizer.recognize_google(audio)
-            print(f"You said: {command}")  # Debugging log
-            return command.lower()
-        except sr.UnknownValueError:
-            print("Sorry, I didn't catch that.")  # Debugging log
-            return ""
-        except sr.RequestError as e:
-            print(f"Speech service is unavailable: {e}")  # Debugging log
-            return ""
+        print("Please speak your note...")
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
 
-def process_command(command):
-    """Process the recognized command and perform the appropriate action."""
-    if "hello" in command:
-        speak("Hello! How can I help you today?")
-    elif "your name" in command:
-        speak("I am your Python voice assistant.")
-    elif "time" in command:
-        current_time = datetime.now().strftime("%H:%M")
-        speak(f"The current time is {current_time}")
-    elif "exit" in command or "quit" in command:
-        speak("Goodbye!")
-        exit()
+    try:
+        text = recognizer.recognize_google(audio)
+        print(f"You said: {text}")
+        return text
+    except sr.UnknownValueError:
+        print("Sorry, I could not understand your speech.")
+    except sr.RequestError as e:
+        print(f"Could not request results; {e}")
+    return None
+
+def save_note(note, filename="newfile.txt"):
+    try:
+        with open(filename, "newfile") as file:
+            file.write(note + "\n")
+        print(f"Note saved to {newfile}")
+    except IOError as e:
+        print(f"Error saving note: {e}")
+
+def read_notes(filename="newfile.txt"):
+    try:
+        with open(filename, "r") as file:
+            notes = file.readlines()
+            print("\nSaved Notes:")
+            for i, note in enumerate(notes, start=1):
+                print(f"{i}. {note.strip()}")
+    except FileNotFoundError:
+        print("No notes found. Start by taking a note.")
+
+def main():
+    print("1. Take a note")
+    print("2. Read notes")
+    choice = input("Enter your choice (1 or 2): ")
+
+    if choice == "1":
+        note = listen_and_transcribe()
+        if note:
+            save_note(note)
+    elif choice == "2":
+        read_notes()
     else:
-        speak("Sorry, I didn't understand that.")
+        print("Invalid choice")
 
-# Main loop
-try:
-    speak("Voice assistant activated.")
-    while True:
-        command = listen()
-        if command:
-            process_command(command)
-except KeyboardInterrupt:
-    print("\nProgram interrupted by user. Exiting...")
-    speak("Goodbye!")
+if __name__ == "__main__":
+    main()
